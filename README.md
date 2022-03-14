@@ -14,7 +14,7 @@
 
 Example Application yaml:
 
-```
+```yaml
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
@@ -70,3 +70,101 @@ After changing the nginx image version:
 - [argocd official doc](https://argo-cd.readthedocs.io/en/stable/)
 
 - [argocd github repo](https://github.com/argoproj/argo-cd)
+
+### Using Helm installation
+
+A sample Application custom resource yaml using helm installation:
+
+```yaml
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: argocd-helm-demo
+  namespace: argocd
+spec:
+  destination:
+    namespace: helm
+    server: https://kubernetes.default.svc
+  project: default
+  source:
+    chart: go-rest-api
+    repoURL: http://pkbhowmick.github.io/helm-charts
+    targetRevision: v2022.03.14
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+    - CreateNamespace=true
+
+```
+
+which is almost identical with the yaml of git installation except the source. For helm installation `.spec.source` is a helm chart address with chart repo url, chart name and the chart version.
+
+To modify default values, we can update the values from ui or from application custom resource.
+Here is an example of Application CR with custom values. Here we have added the custom values in `.spec.source.helm.parameters`
+
+```yaml
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: argocd-helm-demo
+  namespace: argocd
+spec:
+  destination:
+    namespace: helm
+    server: https://kubernetes.default.svc
+  project: default
+  source:
+    chart: go-rest-api
+    helm:
+      parameters:
+      - name: Deployment.Replicas
+        value: "3"
+    repoURL: http://pkbhowmick.github.io/helm-charts
+    targetRevision: v2022.03.14
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+    - CreateNamespace=true
+
+```
+
+Application CR example with custom values file. In this case, values file should be in the same git repository where the chart is located.
+
+```yaml
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: argocd-helm-demo
+  namespace: argocd
+spec:
+  destination:
+    namespace: helm
+    server: https://kubernetes.default.svc
+  project: default
+  source:
+    chart: go-rest-api
+    helm:
+      valueFiles:
+        - custom-values.yaml
+    repoURL: http://pkbhowmick.github.io/helm-charts
+    targetRevision: v2022.03.14
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+    - CreateNamespace=true
+```
+
+Some pictures of helm demo.
+
+![helm-demo](./static/argocd-5.png)
+
+Resource graph of helm argocd demo.
+
+![resource-graph](./static/argocd-6.png)
+
